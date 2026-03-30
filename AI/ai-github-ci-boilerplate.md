@@ -158,31 +158,48 @@ gh api repos/{owner}/{repo} \
   --field allow_merge_commit=true
 ```
 
-**Set branch protection on main (require PR + 1 approval + CI must pass):**
-```bash
-gh api repos/{owner}/{repo}/branches/main/protection \
-  --method PUT \
-  --header "Accept: application/vnd.github+json" \
-  --input - <<'EOF'
-{
-  "required_status_checks": {
-    "strict": false,
-    "contexts": ["Build"]
-  },
-  "enforce_admins": false,
-  "required_pull_request_reviews": {
-    "required_approving_review_count": 1,
-    "dismiss_stale_reviews": false
-  },
-  "restrictions": null
-}
-EOF
-```
+**Set branch protection on main:**
 
-> Extract `{owner}` and `{repo}` from the GitHub Repo URL provided by the developer.
-> Both commands must succeed before setup is considered complete.
+> First ask the developer: "Is there a manager or second team member who will approve PRs, or are you the sole developer?"
+>
+> **If a manager/reviewer exists (team setup):** require 1 approval + CI:
+> ```bash
+> gh api repos/{owner}/{repo}/branches/main/protection \
+>   --method PUT \
+>   --header "Accept: application/vnd.github+json" \
+>   --input - <<'EOF'
+> {
+>   "required_status_checks": { "strict": false, "contexts": ["Build"] },
+>   "enforce_admins": false,
+>   "required_pull_request_reviews": {
+>     "required_approving_review_count": 1,
+>     "dismiss_stale_reviews": false
+>   },
+>   "restrictions": null
+> }
+> EOF
+> ```
 > Once done, tell the developer:
-> "GitHub is fully configured. Manager only needs to Approve the PR — GitHub auto-merges to main."
+> "Manager only needs to Approve the PR — GitHub auto-merges to main automatically."
+>
+> **If sole developer (no reviewer):** CI only, no approval required:
+> ```bash
+> gh api repos/{owner}/{repo}/branches/main/protection \
+>   --method PUT \
+>   --header "Accept: application/vnd.github+json" \
+>   --input - <<'EOF'
+> {
+>   "required_status_checks": { "strict": false, "contexts": ["Build"] },
+>   "enforce_admins": false,
+>   "required_pull_request_reviews": null,
+>   "restrictions": null
+> }
+> EOF
+> ```
+> Once done, tell the developer:
+> "GitHub is configured for solo development. PRs merge automatically once CI passes — no approval needed."
+>
+> NOTE — GitHub does NOT allow a PR author to approve their own PR. If you set required_approving_review_count to 1 and there is only one developer, PRs will be permanently blocked. Always use the solo setup for single-developer projects.
 
 ---
 
@@ -335,7 +352,7 @@ Show only a short summary table of actions taken at the end.
 - [ ] `development` branch exists on GitHub
 - [ ] `.github/workflows/ci.yml` is committed and pushed to `development`
 - [ ] `gh api PATCH` confirmed `allow_auto_merge: true`
-- [ ] `gh api PUT` confirmed branch protection on `main` with required PR + 1 approval + Build check
+- [ ] `gh api PUT` confirmed branch protection on `main` with Build CI check required (approval required only if a reviewer exists — never for sole developers)
 
 ### After Trigger B:
 - [ ] `git status` is clean after push
