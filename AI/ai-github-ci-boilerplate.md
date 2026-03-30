@@ -42,13 +42,24 @@ Solution Folder : {absolute path to .sln or .csproj root}
 > ⚠️ IMPORTANT — GitHub CLI must be authenticated BEFORE running Trigger A.
 > If `gh auth status` fails, the developer must run `gh auth login` once in their terminal.
 
-### Trigger B — Push Changes to Development
+### Trigger D — Ship Changes (Push + PR in one shot) ← DEFAULT FOR DAILY USE
+```
+Push my changes
+```
+or any of these natural phrases:
+```
+Deploy / Ship it / Push and raise PR
+```
+> AI will automatically run Trigger B + Trigger C back to back — no separate commands needed.
+> Developer just describes what changed (or AI infers it from the diff) and everything is done.
+
+### Trigger B — Push Changes to Development (manual, if needed separately)
 ```
 Using ai-github-ci-boilerplate.md, push my latest changes to development:
 Commit Message  : {describe what changed}
 ```
 
-### Trigger C — Open PR from Development to Main
+### Trigger C — Open PR from Development to Main (manual, if needed separately)
 ```
 Using ai-github-ci-boilerplate.md, open a PR from development to main:
 PR Title        : {short title}
@@ -301,6 +312,14 @@ jobs:
 
 ## GENERATION ORDER — MANDATORY
 
+### For Trigger D (Ship Changes — Push + PR, default daily workflow):
+> Triggered by natural phrases: "push my changes", "deploy", "ship it", "push and raise PR"
+1. Read the git diff to understand what changed — derive a meaningful commit message automatically
+2. Run all of Trigger B steps (checkout development → add → status verify → commit → push)
+3. Immediately run all of Trigger C steps (check for open PR → create if none → enable auto-merge)
+4. Report a single summary table covering both operations
+> Never ask the developer to run Trigger B and Trigger C separately. Always do both in one go.
+
 ### For Trigger A (One-Time Setup):
 1. Check `gh auth status` — if not installed, install via winget; if not logged in, ask developer to run `gh auth login` once, then stop until confirmed
 2. Check `git config user.name` and `user.email` — stop if not set, ask user
@@ -337,6 +356,8 @@ NEVER show git commands or YAML in the chat as the final output.
 ALWAYS execute git commands directly via bash tools.
 ALWAYS write `.gitignore` and `.github/workflows/ci.yml` directly using file write tools.
 ALWAYS run `gh api` commands directly — never ask the developer to configure GitHub settings manually.
+ALWAYS treat "push my changes", "deploy", "ship it", or similar phrases as Trigger D — run B + C automatically without asking.
+NEVER ask the developer to run Trigger B and Trigger C as separate steps — Trigger D is the default.
 Show only a short summary table of actions taken at the end.
 
 ---
