@@ -9,8 +9,9 @@ public static class ApiRoutes
 
     public static class Ticket
     {
-        public const string Base   = "api/DeleteTicket";
-        public const string Delete = "Delete";
+        public const string Base                = "api/DeleteTicket";
+        public const string Delete              = "Delete";
+        public const string InsertTicketDetials = "~/api/InsertTicketDetials/TicketDetials";
     }
 
     public static class JobOrder

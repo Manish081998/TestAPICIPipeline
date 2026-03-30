@@ -33,4 +33,19 @@ public class TicketController : ControllerBase
             return StatusCode(500, ApiResponse<object>.Fail("Internal Server Error"));
         }
     }
+
+    [HttpPost(ApiRoutes.Ticket.InsertTicketDetials)]
+    public async Task<IActionResult> InsertTicketDetials([FromBody] InsertTicketDetialsRequest request)
+    {
+        try
+        {
+            var result = await _ticketService.InsertTicketDetialsAsync(request);
+            return Ok(ApiResponse<InsertTicketDetialsResponse>.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in InsertTicketDetials");
+            return StatusCode(500, ApiResponse<object>.Fail("Internal Server Error"));
+        }
+    }
 }

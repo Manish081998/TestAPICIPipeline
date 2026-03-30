@@ -25,4 +25,23 @@ public class TicketService : ITicketService
             throw;
         }
     }
+
+    public async Task<InsertTicketDetialsResponse> InsertTicketDetialsAsync(InsertTicketDetialsRequest request)
+    {
+        try
+        {
+            var rowsAffected = await _ticketRepository.InsertTicketDetialsAsync(request);
+            return new InsertTicketDetialsResponse
+            {
+                CaseNumber = request.CaseNumber,
+                SoNumber   = request.SoNumber,
+                Success    = rowsAffected > 0
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Service Error in InsertTicketDetialsAsync");
+            throw;
+        }
+    }
 }
