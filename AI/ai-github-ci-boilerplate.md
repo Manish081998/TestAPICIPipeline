@@ -16,7 +16,7 @@
 - Commit messages are free-form but must be meaningful (not "fix" or "update")
 - Auto-merge is ENABLED — manager only needs to Approve, GitHub merges automatically
 - Manager does NOT need to click Merge — approval alone triggers the merge
-- Repository MUST be Private for work/enterprise projects — warn user if Public
+- GitHub CLI (`gh`) is REQUIRED — install it if not present, then `gh auth login` once
 
 ---
 
@@ -39,6 +39,9 @@ GitHub Repo URL : https://github.com/{username}/{repo}.git
 Solution Folder : {absolute path to .sln or .csproj root}
 ```
 
+> ⚠️ IMPORTANT — GitHub CLI must be authenticated BEFORE running Trigger A.
+> If `gh auth status` fails, the developer must run `gh auth login` once in their terminal.
+
 ### Trigger B — Push Changes to Development
 ```
 Using ai-github-ci-boilerplate.md, push my latest changes to development:
@@ -60,7 +63,22 @@ PR Description  : {what this change does and why}
 
 ### Step 0 — Pre-flight checks (MANDATORY before anything else)
 
-**Check 1 — Git identity configured?**
+**Check 1 — GitHub CLI installed and authenticated?**
+```bash
+gh auth status
+```
+> If `gh` is not found, install it:
+> ```bash
+> winget install --id GitHub.cli --silent --accept-package-agreements --accept-source-agreements
+> ```
+> Then ask the developer to open a terminal and run once:
+> ```
+> gh auth login
+> Select: GitHub.com → HTTPS → Login with a web browser
+> ```
+> STOP until `gh auth status` confirms they are logged in.
+
+**Check 2 — Git identity configured?**
 ```bash
 git config --global user.name
 git config --global user.email
@@ -72,13 +90,8 @@ git config --global user.email
 > ```
 > STOP and ask the user for their name and GitHub email if not set.
 
-**Check 2 — Repo visibility warning**
-> After setup, remind the user:
-> "Your GitHub repo is currently PUBLIC. For work projects, go to:
-> GitHub → your repo → Settings → scroll to bottom → Change repository visibility → Make private"
-
 **Check 3 — Secrets in appsettings.json**
-> Check if `appsettings.json` contains ConnectionStrings or any passwords.
+> Check if `appsettings.json` contains real ConnectionStrings or passwords (not placeholders).
 > If yes, add `appsettings.json` to `.gitignore` and warn the user:
 > "appsettings.json contains secrets and has been excluded from git.
 > Store real connection strings in environment variables or Azure Key Vault."
@@ -116,9 +129,6 @@ git branch -M main
 git remote add origin {GitHub Repo URL}
 git push -u origin main
 ```
-> On first push a browser window or credential popup will appear.
-> The developer must log in to GitHub in that window.
-> Git Credential Manager stores the token — no login needed on future pushes.
 
 ### Step 3 — Create development branch
 ```bash
@@ -136,30 +146,43 @@ git commit -m "Add GitHub Actions CI workflow"
 git push origin development
 ```
 
-### Step 6 — Instruct user to configure GitHub repo settings
-> AI cannot change GitHub settings without GitHub CLI.
-> After setup, tell the user exactly:
->
-> **Part 1 — Enable Auto-Merge (so manager approval auto-merges the PR):**
-> 1. Go to your GitHub repo → click Settings tab
-> 2. Scroll down to the Pull Requests section
-> 3. Check: Allow auto-merge
-> 4. Click Save
->
-> **Part 2 — Set Branch Protection on main:**
-> 1. In the left sidebar click Branches
-> 2. Under Branch protection rules click Add rule
-> 3. In Branch name pattern type: main
-> 4. Check: Require a pull request before merging
-> 5. Check: Require approvals → set to 1
-> 6. Check: Require status checks to pass before merging
->    → In the search box type 'Build' and select it
-> 7. Click Create (green button at bottom)
->
-> Once both are done:
-> - Manager receives a PR notification
-> - Manager reviews the code and clicks Approve
-> - GitHub automatically merges to main — no extra click needed from manager"
+### Step 6 — Automate GitHub repo settings via gh CLI
+> Run these commands directly — no manual browser steps required.
+
+**Enable auto-merge:**
+```bash
+gh api repos/{owner}/{repo} \
+  --method PATCH \
+  --header "Accept: application/vnd.github+json" \
+  --field allow_auto_merge=true \
+  --field allow_merge_commit=true
+```
+
+**Set branch protection on main (require PR + 1 approval + CI must pass):**
+```bash
+gh api repos/{owner}/{repo}/branches/main/protection \
+  --method PUT \
+  --header "Accept: application/vnd.github+json" \
+  --input - <<'EOF'
+{
+  "required_status_checks": {
+    "strict": false,
+    "contexts": ["Build"]
+  },
+  "enforce_admins": false,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": 1,
+    "dismiss_stale_reviews": false
+  },
+  "restrictions": null
+}
+EOF
+```
+
+> Extract `{owner}` and `{repo}` from the GitHub Repo URL provided by the developer.
+> Both commands must succeed before setup is considered complete.
+> Once done, tell the developer:
+> "GitHub is fully configured. Manager only needs to Approve the PR — GitHub auto-merges to main."
 
 ---
 
@@ -201,32 +224,14 @@ git checkout development
 git status                              # must be clean — no uncommitted changes
 ```
 
-### Step 2 — Open PR with Auto-Merge enabled
-Instruct the user to go to GitHub and open a PR:
-```
-GitHub → your repo → Pull Requests tab → New Pull Request
-Base    : main
-Compare : development
-Title   : {PR Title}
-Body    : {PR Description — what changed and why}
-Click: Create Pull Request
-```
-
-After PR is created, instruct user to enable auto-merge:
-```
-On the PR page → click "Enable auto-merge" button
-Select: Merge commit
-Click: Confirm auto-merge
-```
-
-> OR if gh CLI is available (does both in one command):
+### Step 2 — Open PR with auto-merge enabled (fully automated via gh CLI)
 ```bash
 gh pr create --base main --head development --title "{PR Title}" --body "{PR Description}"
 gh pr merge --auto --merge
 ```
 
 ### Step 3 — Notify manager
-After PR is opened with auto-merge enabled, tell the user:
+After PR is opened:
 > "PR is open and auto-merge is enabled.
 > Your manager just needs to review the code and click Approve.
 > GitHub will automatically merge to main — manager does NOT need to click Merge."
@@ -280,15 +285,18 @@ jobs:
 ## GENERATION ORDER — MANDATORY
 
 ### For Trigger A (One-Time Setup):
-1. Check `git config user.name` and `user.email` — stop if not set, ask user
-2. Warn if repo is Public — remind user to make it Private
-3. Check `appsettings.json` for secrets — add to `.gitignore` if found
+1. Check `gh auth status` — if not installed, install via winget; if not logged in, ask developer to run `gh auth login` once, then stop until confirmed
+2. Check `git config user.name` and `user.email` — stop if not set, ask user
+3. Check `appsettings.json` for real secrets — add to `.gitignore` if found
 4. Write `.gitignore` into solution root
-5. `git init` + `git add .` + `git status` (verify) + `git commit` + `git push` to `main`
-6. Create and push `development` branch
-7. Write `.github/workflows/ci.yml`
-8. Commit and push the workflow file to `development`
-9. Give user exact branch protection steps to follow on GitHub
+5. `git init` + `git add .` + `git status` (verify) + `git commit`
+6. `git push -u origin main`  ← MUST push main BEFORE setting up branch protection
+7. Create and push `development` branch
+8. Write `.github/workflows/ci.yml`
+9. Commit and push the workflow file to `development`
+10. Run `gh api` to enable auto-merge on the repo
+11. Run `gh api` to set branch protection on `main` (require PR + 1 approval + Build status check)
+12. Confirm both API calls succeeded — report final status to developer
 
 ### For Trigger B (Push Changes):
 1. Check `git config user.name` and `user.email` — stop if not set
@@ -300,8 +308,9 @@ jobs:
 
 ### For Trigger C (Open PR):
 1. Verify `git status` is clean on development
-2. Instruct user to open PR via GitHub website (or use `gh pr create` if available)
-3. Confirm PR is open and tell user manager has been notified
+2. Run `gh pr create --base main --head development` with title and description
+3. Run `gh pr merge --auto --merge`
+4. Confirm PR is open and tell developer manager has been notified
 
 ---
 
@@ -310,6 +319,7 @@ jobs:
 NEVER show git commands or YAML in the chat as the final output.
 ALWAYS execute git commands directly via bash tools.
 ALWAYS write `.gitignore` and `.github/workflows/ci.yml` directly using file write tools.
+ALWAYS run `gh api` commands directly — never ask the developer to configure GitHub settings manually.
 Show only a short summary table of actions taken at the end.
 
 ---
@@ -317,15 +327,15 @@ Show only a short summary table of actions taken at the end.
 ## VERIFICATION CHECKLIST
 
 ### After Trigger A:
+- [ ] `gh auth status` confirms logged in
 - [ ] `git config user.name` and `user.email` are set
 - [ ] `.gitignore` exists and excludes `bin/`, `obj/`, `.vs/`, `*.user`
 - [ ] `git remote -v` shows the correct GitHub URL
 - [ ] `main` branch exists on GitHub with all solution files
 - [ ] `development` branch exists on GitHub
 - [ ] `.github/workflows/ci.yml` is committed and pushed to `development`
-- [ ] User warned about Public repo visibility
-- [ ] User given exact branch protection steps
-- [ ] User informed about first-push authentication popup
+- [ ] `gh api PATCH` confirmed `allow_auto_merge: true`
+- [ ] `gh api PUT` confirmed branch protection on `main` with required PR + 1 approval + Build check
 
 ### After Trigger B:
 - [ ] `git status` is clean after push
@@ -334,6 +344,6 @@ Show only a short summary table of actions taken at the end.
 
 ### After Trigger C:
 - [ ] PR is open from `development` → `main`
-- [ ] Auto-merge is enabled on the PR
+- [ ] Auto-merge is enabled on the PR (`gh pr merge --auto --merge` ran successfully)
 - [ ] CI check is passing on the PR
 - [ ] Manager has been notified — they only need to Approve, not click Merge
