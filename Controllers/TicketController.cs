@@ -12,7 +12,6 @@ public class TicketController : ControllerBase
         _ticketService = ticketService;
         _logger        = logger;
     }
-//Hi Test Ping Pong final
     [HttpDelete(ApiRoutes.Ticket.Delete)]
     public async Task<IActionResult> DeleteTicket([FromQuery] DeleteTicketRequest request)
     {
