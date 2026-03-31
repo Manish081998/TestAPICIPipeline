@@ -33,7 +33,7 @@ public class TicketController : ControllerBase
         }
     }
 
-//Removed All comments 
+//Test Comment on Insert Ticket 
     [HttpPost(ApiRoutes.Ticket.InsertTicketDetials)]
     public async Task<IActionResult> InsertTicketDetials([FromBody] InsertTicketDetialsRequest request)
     {
