@@ -12,7 +12,7 @@ public class TicketController : ControllerBase
         _ticketService = ticketService;
         _logger        = logger;
     }
-// Removed All Comments
+// To delete the ticket as per the ticket ID 
     [HttpDelete(ApiRoutes.Ticket.Delete)]
     public async Task<IActionResult> DeleteTicket([FromQuery] DeleteTicketRequest request)
     {
