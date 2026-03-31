@@ -33,8 +33,7 @@ public class TicketController : ControllerBase
         }
     }
 
-//Insert ticket details
-//Again Insert
+//Removed All comments 
     [HttpPost(ApiRoutes.Ticket.InsertTicketDetials)]
     public async Task<IActionResult> InsertTicketDetials([FromBody] InsertTicketDetialsRequest request)
     {
