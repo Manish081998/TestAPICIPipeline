@@ -13,6 +13,7 @@ public class TicketController : ControllerBase
         _logger        = logger;
     }
 // To delete the ticket as per the ticket ID 
+//Require Approval before merge to main 
     [HttpDelete(ApiRoutes.Ticket.Delete)]
     public async Task<IActionResult> DeleteTicket([FromQuery] DeleteTicketRequest request)
     {
