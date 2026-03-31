@@ -34,7 +34,6 @@ public class TicketController : ControllerBase
     }
 
 //31-03-2026 Test 4
-string manish 
     [HttpPost(ApiRoutes.Ticket.InsertTicketDetials)]
     public async Task<IActionResult> InsertTicketDetials([FromBody] InsertTicketDetialsRequest request)
     {
