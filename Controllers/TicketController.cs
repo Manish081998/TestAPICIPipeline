@@ -14,6 +14,7 @@ public class TicketController : ControllerBase
     }
 // test
 // test1
+// test2
     [HttpDelete(ApiRoutes.Ticket.Delete)]
     public async Task<IActionResult> DeleteTicket([FromQuery] DeleteTicketRequest request)
     {
