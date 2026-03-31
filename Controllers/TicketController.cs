@@ -13,6 +13,7 @@ public class TicketController : ControllerBase
         _logger        = logger;
     }
 //Removed all comments
+//Manish
     [HttpDelete(ApiRoutes.Ticket.Delete)]
     public async Task<IActionResult> DeleteTicket([FromQuery] DeleteTicketRequest request)
     {
