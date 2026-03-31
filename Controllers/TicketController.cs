@@ -12,12 +12,7 @@ public class TicketController : ControllerBase
         _ticketService = ticketService;
         _logger        = logger;
     }
-// test
-// test1
-// test2
-// test3
-// test4
-// testManish
+// Removed All Comments
     [HttpDelete(ApiRoutes.Ticket.Delete)]
     public async Task<IActionResult> DeleteTicket([FromQuery] DeleteTicketRequest request)
     {
