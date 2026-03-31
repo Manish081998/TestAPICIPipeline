@@ -14,6 +14,7 @@ public class TicketController : ControllerBase
     }
 //Removed all comments
 //Manish
+//Manish 1 approval Needed
     [HttpDelete(ApiRoutes.Ticket.Delete)]
     public async Task<IActionResult> DeleteTicket([FromQuery] DeleteTicketRequest request)
     {
