@@ -20,12 +20,12 @@ jobs:
       - name: Build
         run: |
           if find . -maxdepth 4 \( -name "*.sln" -o -name "*.csproj" \) 2>/dev/null | grep -q .; then
-            echo "Detected .NET project — running dotnet build"
+            echo "Detected .NET project"
             dotnet build
           elif [ -f package.json ]; then
-            echo "Detected Node.js project — running npm build"
+            echo "Detected Node/Angular project"
             [ -f package-lock.json ] && npm ci || npm install
-            npm run build --if-present
+            npm run build --if-present || echo "No build script, skipping"
           else
-            echo "No recognizable project type found — skipping build"
+            echo "No recognizable project type — skipping build"
           fi
