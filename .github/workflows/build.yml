@@ -27,5 +27,5 @@ jobs:
             [ -f package-lock.json ] && npm ci || npm install
             npm run build --if-present || echo "No build script, skipping"
           else
-            echo "No recognizable project type found — skipping build"
+            echo "No recognizable project type — skipping build"
           fi
