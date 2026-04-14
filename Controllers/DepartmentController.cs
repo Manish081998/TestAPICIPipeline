@@ -13,6 +13,7 @@ public class DepartmentController : ControllerBase
         _logger            = logger;
     }
 
+
     [HttpGet(ApiRoutes.Salary.GetDepartmentName)]
     public async Task<IActionResult> GetDepartmentName([FromQuery] GetDepartmentNameRequest request)
     {

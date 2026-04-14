@@ -12,7 +12,7 @@ public class CaseController : ControllerBase
         _caseService = caseService;
         _logger      = logger;
     }
-
+    //string 
     [HttpGet(ApiRoutes.Case.GetCase)]
     public async Task<IActionResult> GetAllCases()
     {
